@@ -1,5 +1,65 @@
 use bevy::prelude::*;
 use bevy_voxel_world::prelude::*;
+use std::sync::Arc;
+
+// Materials.
+const GRASS: u8 = 0;
+const DIRT: u8 = 1;
+const STONE: u8 = 2;
+const SNOWY_STONE: u8 = 3;
+const COBBLESTONE: u8 = 4;
+const DARK_PLANKS: u8 = 5;
+const TIMBER: u8 = 6;
+const ROOF: u8 = 7;
+const LEAVES: u8 = 8;
+const BARK: u8 = 9;
+const LANTERN: u8 = 10;
+const CRYSTAL: u8 = 11;
+const GRAVEL: u8 = 12;
+const FLOOR: u8 = 13;
+const HEARTH: u8 = 14;
+
+// Tiles of `assets/mountain_house_texture.png`, from the top.
+const TILE_GRASS_TOP: u32 = 0;
+const TILE_GRASS_SIDE: u32 = 1;
+const TILE_DIRT: u32 = 2;
+const TILE_STONE: u32 = 3;
+const TILE_SNOW: u32 = 4;
+const TILE_SNOWY_STONE_SIDE: u32 = 5;
+const TILE_COBBLESTONE: u32 = 6;
+const TILE_DARK_PLANKS: u32 = 7;
+const TILE_TIMBER_SIDE: u32 = 8;
+const TILE_TIMBER_TOP: u32 = 9;
+const TILE_ROOF: u32 = 10;
+const TILE_SPRUCE_LEAVES: u32 = 11;
+const TILE_SPRUCE_BARK: u32 = 12;
+const TILE_LANTERN: u32 = 13;
+const TILE_CRYSTAL: u32 = 14;
+const TILE_GRAVEL: u32 = 15;
+const TILE_FLOOR_PLANKS: u32 = 16;
+const TILE_HEARTH: u32 = 17;
+const TILE_COUNT: u32 = 18;
+
+fn texture_indices(material: u8) -> [u32; 3] {
+    match material {
+        GRASS => [TILE_GRASS_TOP, TILE_GRASS_SIDE, TILE_DIRT],
+        DIRT => [TILE_DIRT; 3],
+        STONE => [TILE_STONE; 3],
+        SNOWY_STONE => [TILE_SNOW, TILE_SNOWY_STONE_SIDE, TILE_STONE],
+        COBBLESTONE => [TILE_COBBLESTONE; 3],
+        DARK_PLANKS => [TILE_DARK_PLANKS; 3],
+        TIMBER => [TILE_TIMBER_TOP, TILE_TIMBER_SIDE, TILE_TIMBER_TOP],
+        ROOF => [TILE_ROOF; 3],
+        LEAVES => [TILE_SPRUCE_LEAVES; 3],
+        BARK => [TILE_SPRUCE_BARK; 3],
+        LANTERN => [TILE_LANTERN; 3],
+        CRYSTAL => [TILE_CRYSTAL; 3],
+        GRAVEL => [TILE_GRAVEL; 3],
+        FLOOR => [TILE_FLOOR_PLANKS; 3],
+        HEARTH => [TILE_HEARTH; 3],
+        _ => [TILE_STONE; 3],
+    }
+}
 
 #[derive(Resource, Clone, Default)]
 struct WillaDadWorld;
@@ -10,23 +70,34 @@ impl VoxelWorldConfig for WillaDadWorld {
 
     fn voxel_lookup_delegate(&self) -> VoxelLookupDelegate<Self::MaterialIndex> {
         // This is the Chunk closure, called once per chunk
-        Box::new(move |_chunk_pos, _lod, _previous| {
+        Box::new(move |chunk_pos, lod, previous| {
+            println!("{chunk_pos} {lod} {previous:?}");
             // And this is the Voxel closure, called for every voxel, 32^3, or 32768 times per chunk!
-            Box::new(move |pos: IVec3, _previous| {
-                let scale = 4.0;
+            Box::new(move |pos: IVec3, previous| {
+                let scale = 6.0;
 
                 // Nice wavy sine hills!
                 if (pos.y as f32)
                     < (pos.x as f32 / scale).sin() * scale + (pos.z as f32 / scale).sin() * scale
                 {
-                    // Every voxel below the sine threshold is solid
-                    return WorldVoxel::Solid(0);
+                    if pos.y < 0 {
+                        WorldVoxel::Solid(GRASS)
+                    } else {
+                        WorldVoxel::Solid(SNOWY_STONE)
+                    }
+                } else {
+                    WorldVoxel::Unset
                 }
-
-                // Everything else is left unset
-                WorldVoxel::Unset
             })
         })
+    }
+
+    fn texture_index_mapper(&self) -> Arc<dyn Fn(Self::MaterialIndex) -> [u32; 3] + Send + Sync> {
+        Arc::new(texture_indices)
+    }
+
+    fn voxel_texture(&self) -> Option<(String, u32)> {
+        Some(("mountain_house_texture.png".into(), TILE_COUNT))
     }
 }
 
