@@ -74,6 +74,14 @@ impl VoxelWorldConfig for WillaDadWorld {
     type MaterialIndex = u8;
     type ChunkUserBundle = ();
 
+    fn chunk_spawn_strategy(&self) -> ChunkSpawnStrategy {
+        ChunkSpawnStrategy::Close
+    }
+
+    fn chunk_despawn_strategy(&self) -> ChunkDespawnStrategy {
+        ChunkDespawnStrategy::FarAway
+    }
+
     fn voxel_lookup_delegate(&self) -> VoxelLookupDelegate<Self::MaterialIndex> {
         // This is the Chunk closure, called once per chunk
 
