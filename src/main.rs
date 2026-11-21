@@ -1,8 +1,6 @@
-use bevy::{
-    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin},
-    prelude::*,
-};
+use bevy::{dev_tools::fps_overlay::FpsOverlayPlugin, prelude::*};
 use bevy_voxel_world::prelude::*;
+use noise::{HybridMulti, NoiseFn, Perlin};
 use std::sync::Arc;
 
 // Materials.
@@ -73,21 +71,23 @@ impl VoxelWorldConfig for WillaDadWorld {
 
     fn voxel_lookup_delegate(&self) -> VoxelLookupDelegate<Self::MaterialIndex> {
         // This is the Chunk closure, called once per chunk
+
         Box::new(move |chunk_pos, lod, previous| {
             println!("{chunk_pos} {lod} {previous:?}");
-            // And this is the Voxel closure, called for every voxel, 32^3, or 32768 times per chunk!
-            Box::new(move |pos: IVec3, _previous| {
-                let scale = 6.0;
 
-                // Nice wavy sine hills!
-                if (pos.y as f32)
-                    < (pos.x as f32 / scale).sin() * scale + (pos.z as f32 / scale).sin() * scale
-                {
-                    if pos.y < 0 {
-                        WorldVoxel::Solid(GRASS)
-                    } else {
-                        WorldVoxel::Solid(SNOWY_STONE)
-                    }
+            Box::new(move |pos: IVec3, _previous| {
+                if pos.y < 0 {
+                    return WorldVoxel::Solid(DIRT);
+                }
+                let mut noise = HybridMulti::<Perlin>::new(12345);
+                noise.octaves = 5;
+                noise.frequency = 1.1;
+                noise.lacunarity = 2.8;
+                noise.persistence = 0.4;
+                let [x, y, z] = pos.as_dvec3().to_array();
+                let sample = noise.get([x / 1000.0, z / 1000.0]) * 50.0;
+                if y < sample {
+                    WorldVoxel::Solid(GRASS)
                 } else {
                     WorldVoxel::Unset
                 }
@@ -107,9 +107,7 @@ impl VoxelWorldConfig for WillaDadWorld {
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(FpsOverlayPlugin {
-            config: FpsOverlayConfig::default(),
-        })
+        .add_plugins(FpsOverlayPlugin::default())
         .add_plugins(VoxelWorldPlugin::with_config(WillaDadWorld))
         .add_systems(Startup, setup)
         .run();
@@ -119,7 +117,7 @@ fn setup(mut commands: Commands, mut voxel_world: VoxelWorld<WillaDadWorld>) {
     // Camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(-50.0, 50.0, -50.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(-40.0, 40.0, -40.0).looking_at(Vec3::ZERO, Vec3::Y),
         // This tells bevy_voxel_world to use this cameras transform to calculate spawning area
         VoxelWorldCamera::<WillaDadWorld>::default(),
     ));
