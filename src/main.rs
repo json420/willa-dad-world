@@ -1,7 +1,12 @@
-use bevy::{dev_tools::fps_overlay::FpsOverlayPlugin, prelude::*};
+use bevy::{
+    dev_tools::fps_overlay::FpsOverlayPlugin, input::mouse::AccumulatedMouseMotion, prelude::*,
+};
 use bevy_voxel_world::prelude::*;
 use noise::{HybridMulti, NoiseFn, Perlin};
+use std::f32::consts::FRAC_PI_2;
 use std::sync::Arc;
+
+const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.02;
 
 // Materials.
 const GRASS: u8 = 0;
@@ -110,6 +115,7 @@ fn main() {
         .add_plugins(FpsOverlayPlugin::default())
         .add_plugins(VoxelWorldPlugin::with_config(WillaDadWorld))
         .add_systems(Startup, setup)
+        .add_systems(Update, mouse_move)
         .run();
 }
 
@@ -140,4 +146,16 @@ fn setup(mut commands: Commands, mut voxel_world: VoxelWorld<WillaDadWorld>) {
     for z in -3..=3 {
         voxel_world.set_voxel(IVec3::new(0, 0, z), WorldVoxel::Solid(0));
     }
+}
+
+fn mouse_move(
+    motion: Res<AccumulatedMouseMotion>,
+    mut transform: Single<&mut Transform, With<Camera3d>>,
+) {
+    let delta_yaw = -motion.delta.x * 0.003;
+    let delta_pitch = -motion.delta.y * 0.002;
+    let (yaw, pitch, roll) = transform.rotation.to_euler(EulerRot::YXZ);
+    let pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+    let yaw = yaw + delta_yaw;
+    transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
 }
