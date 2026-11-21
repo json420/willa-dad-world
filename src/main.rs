@@ -8,23 +8,13 @@ struct WillaDadWorld;
 impl VoxelWorldConfig for WillaDadWorld {
     type MaterialIndex = u8;
     type ChunkUserBundle = ();
-
-    fn spawning_distance(&self) -> u32 {
-        25
-    }
-
-    /*
-    fn voxel_texture(&self) -> Option<(String, u32)> {
-        Some(("example_voxel_texture.png".into(), 4)) // Array texture with 4 indexes
-    }
-    */
 }
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(VoxelWorldPlugin::with_config(WillaDadWorld))
         .add_plugins(VoxelWorldPlugin::default())
+        //.add_plugins(VoxelWorldPlugin::with_config(WillaDadWorld))
         .add_systems(Startup, setup)
         .add_systems(Update, (set_solid_voxel, move_camera))
         .run();

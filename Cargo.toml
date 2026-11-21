@@ -5,7 +5,7 @@ edition = "2024"
 rust-version = "1.100.0"
 
 [dependencies]
-bevy = "0.20.1"
+bevy = { version = "0.20.1", features = ["debug"] }
 bevy_voxel_world = { version = "0.19.3", features = ["light_propagation"] }
 rand = "0.10.4"
 
