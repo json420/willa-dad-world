@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin},
+    prelude::*,
+};
 use bevy_voxel_world::prelude::*;
 use std::sync::Arc;
 
@@ -73,7 +76,7 @@ impl VoxelWorldConfig for WillaDadWorld {
         Box::new(move |chunk_pos, lod, previous| {
             println!("{chunk_pos} {lod} {previous:?}");
             // And this is the Voxel closure, called for every voxel, 32^3, or 32768 times per chunk!
-            Box::new(move |pos: IVec3, previous| {
+            Box::new(move |pos: IVec3, _previous| {
                 let scale = 6.0;
 
                 // Nice wavy sine hills!
@@ -104,6 +107,9 @@ impl VoxelWorldConfig for WillaDadWorld {
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(FpsOverlayPlugin {
+            config: FpsOverlayConfig::default(),
+        })
         .add_plugins(VoxelWorldPlugin::with_config(WillaDadWorld))
         .add_systems(Startup, setup)
         .run();
