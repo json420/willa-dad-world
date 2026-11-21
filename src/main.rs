@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_voxel_world::prelude::*;
-use std::sync::Arc;
+use rand::RngExt;
 
 #[derive(Resource, Clone, Default)]
 struct WillaDadWorld;
@@ -11,22 +11,6 @@ impl VoxelWorldConfig for WillaDadWorld {
 
     fn spawning_distance(&self) -> u32 {
         25
-    }
-
-    fn light_propagation(&self) -> Option<LightPropagation> {
-        Some(LightPropagation::default())
-    }
-
-    fn texture_index_mapper(&self) -> Arc<dyn Fn(u8) -> [u32; 3] + Send + Sync> {
-        Arc::new(|vox_mat: u8| match vox_mat {
-            0 => [0, 1, 2],
-            1 => [2, 2, 2],
-            2 | _ => [3, 3, 3],
-        })
-    }
-
-    fn emissive_materials(&self) -> Vec<(u8, Emission)> {
-        vec![(3, Emission::level(15.0))]
     }
 
     /*
@@ -40,16 +24,19 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(VoxelWorldPlugin::with_config(WillaDadWorld))
+        .add_plugins(VoxelWorldPlugin::default())
         .add_systems(Startup, setup)
-        .add_systems(Update, example_system)
+        .add_systems(Update, (set_solid_voxel, move_camera))
         .run();
 }
 
 fn setup(mut commands: Commands) {
+    // Camera
     commands.spawn((
         Camera3d::default(),
+        Transform::from_xyz(10.0, 10.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
+        // This tells bevy_voxel_world to use this cameras transform to calculate spawning area
         VoxelWorldCamera::<DefaultWorld>::default(),
-        Transform::from_xyz(0.0, 0.0, 0.0),
     ));
 
     // Ambient light
@@ -60,6 +47,30 @@ fn setup(mut commands: Commands) {
     });
 }
 
-fn example_system(mut world: VoxelWorld<WillaDadWorld>) {
-    world.set_voxel(IVec3::new(0, -5, 0), WorldVoxel::Solid(0));
+fn set_solid_voxel(mut voxel_world: VoxelWorld<DefaultWorld>) {
+    // Generate some random values
+    let size = 10;
+    let mut rng = rand::rng();
+    let x = rng.random_range(-size..size);
+    let y = rng.random_range(-size..size);
+    let z = rng.random_range(-size..size);
+    let voxel_type = rng.random_range(0..4);
+    let pos = IVec3::new(x, y, z);
+
+    // Set a voxel at the random position with the random type
+    if pos.distance_squared(IVec3::ZERO) < i32::pow(size, 2) {
+        voxel_world.set_voxel(pos, WorldVoxel::Solid(voxel_type));
+    }
+}
+
+// Rotate the camera around the origin
+fn move_camera(
+    time: Res<Time>,
+    mut query: Query<&mut Transform, With<VoxelWorldCamera<DefaultWorld>>>,
+) {
+    let mut transform = query.single_mut().unwrap();
+    let time_seconds = time.elapsed_secs();
+    transform.translation.x = 25.0 * (time_seconds * 0.1).sin();
+    transform.translation.z = 25.0 * (time_seconds * 0.1).cos();
+    transform.look_at(Vec3::ZERO, Vec3::Y);
 }

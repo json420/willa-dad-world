@@ -6030,6 +6030,7 @@ version = "0.0.1-pre.0"
 dependencies = [
  "bevy",
  "bevy_voxel_world",
+ "rand",
 ]
 
 [[package]]
