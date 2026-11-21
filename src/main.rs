@@ -89,18 +89,31 @@ impl VoxelWorldConfig for WillaDadWorld {
             println!("{chunk_pos} {lod} {previous:?}");
 
             Box::new(move |pos: IVec3, _previous| {
-                if pos.y < 0 {
-                    return WorldVoxel::Solid(DIRT);
+                if pos.y < 1 {
+                    return WorldVoxel::Solid(GRASS);
+                }
+                if pos.y > 50 {
+                    return WorldVoxel::Unset;
                 }
                 let mut noise = HybridMulti::<Perlin>::new(12345);
-                noise.octaves = 5;
-                noise.frequency = 1.1;
+                noise.octaves = 6;
+                noise.frequency = 1.2;
                 noise.lacunarity = 2.8;
                 noise.persistence = 0.4;
                 let [x, y, z] = pos.as_dvec3().to_array();
+
+                // Sample is in range [-1.0, 1.0]
                 let sample = noise.get([x / 1000.0, z / 1000.0]) * 50.0;
                 if y < sample {
-                    WorldVoxel::Solid(GRASS)
+                    if sample < 15.0 {
+                        WorldVoxel::Solid(GRASS)
+                    } else if sample < 25.0 {
+                        WorldVoxel::Solid(DIRT)
+                    } else if sample < 30.0 {
+                        WorldVoxel::Solid(STONE)
+                    } else {
+                        WorldVoxel::Solid(SNOWY_STONE)
+                    }
                 } else {
                     WorldVoxel::Unset
                 }
