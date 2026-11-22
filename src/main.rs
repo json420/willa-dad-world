@@ -1,3 +1,4 @@
+use avian3d::prelude::*;
 use bevy::{
     dev_tools::fps_overlay::FpsOverlayPlugin, input::mouse::AccumulatedMouseMotion, prelude::*,
 };
@@ -134,7 +135,7 @@ impl VoxelWorldConfig for WillaDadWorld {
         Box::new(move |chunk_pos, lod, previous| {
             println!("{chunk_pos} {lod} {previous:?}");
 
-            let mut noise = NoiseMaker::default();
+            let noise = NoiseMaker::default();
 
             Box::new(move |pos: IVec3, _previous| {
                 if pos.y < -10 {
@@ -170,43 +171,6 @@ impl VoxelWorldConfig for WillaDadWorld {
     fn voxel_texture(&self) -> Option<(String, u32)> {
         Some(("mountain_house_texture.png".into(), TILE_COUNT))
     }
-}
-
-fn get_voxel_fn() -> Box<dyn FnMut(IVec3, Option<WorldVoxel>) -> WorldVoxel + Send + Sync> {
-    // Set up some noise to use as the terrain height map
-    let noise = NoiseMaker::default();
-
-    // We use this to cache the noise value for each y column so we only need
-    // to calculate it once per x/z coordinate
-    let mut cache = HashMap::<(i32, i32), f64>::new();
-
-    // Then we return this boxed closure that captures the noise and the cache
-    // This will get sent off to a separate thread for meshing by bevy_voxel_world
-    Box::new(move |pos: IVec3, _previous| {
-        // Sea level
-        if pos.y < 1 {
-            return WorldVoxel::Solid(3);
-        }
-
-        let [x, y, z] = pos.as_dvec3().to_array();
-
-        // If y is less than the noise sample, we will set the voxel to solid
-        let is_ground = y < match cache.get(&(pos.x, pos.z)) {
-            Some(sample) => *sample,
-            None => {
-                let sample = noise.a.get([x / 1000.0, z / 1000.0]) * 50.0;
-                cache.insert((pos.x, pos.z), sample);
-                sample
-            }
-        };
-
-        if is_ground {
-            // Solid voxel of material type 0
-            WorldVoxel::Solid(0)
-        } else {
-            WorldVoxel::Air
-        }
-    })
 }
 
 fn main() {
