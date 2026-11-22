@@ -9,6 +9,8 @@ use std::f32::consts::FRAC_PI_2;
 use std::sync::Arc;
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.02;
+const PLAYER_RADIUS: f32 = 0.35;
+const PLAYER_HALF_HEIGHT: f32 = 1.0;
 
 // Materials.
 const GRASS: u8 = 0;
@@ -118,7 +120,7 @@ impl VoxelWorldConfig for WillaDadWorld {
     type ChunkUserBundle = ();
 
     fn spawning_distance(&self) -> u32 {
-        100
+        16
     }
 
     fn chunk_spawn_strategy(&self) -> ChunkSpawnStrategy {
@@ -176,6 +178,7 @@ impl VoxelWorldConfig for WillaDadWorld {
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(PhysicsPlugins::default())
         .add_plugins(FpsOverlayPlugin::default())
         .add_plugins(VoxelWorldPlugin::with_config(WillaDadWorld::default()))
         .add_systems(Startup, setup)
@@ -187,9 +190,10 @@ fn setup(mut commands: Commands, mut voxel_world: VoxelWorld<WillaDadWorld>) {
     // Camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(-40.0, 40.0, -40.0).looking_at(Vec3::ZERO, Vec3::Y),
-        // This tells bevy_voxel_world to use this cameras transform to calculate spawning area
         VoxelWorldCamera::<WillaDadWorld>::default(),
+        RigidBody::Static,
+        Collider::capsule(PLAYER_RADIUS, PLAYER_HALF_HEIGHT),
+        Transform::from_xyz(-40.0, 10.0, -40.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
     // light
