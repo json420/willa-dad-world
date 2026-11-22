@@ -3,6 +3,7 @@ use bevy::{
 };
 use bevy_voxel_world::prelude::*;
 use noise::{HybridMulti, NoiseFn, Perlin};
+use std::collections::HashMap;
 use std::f32::consts::FRAC_PI_2;
 use std::sync::Arc;
 
@@ -67,6 +68,47 @@ fn texture_indices(material: u8) -> [u32; 3] {
     }
 }
 
+struct NoiseMaker {
+    pub a: HybridMulti<Perlin>,
+    pub b: HybridMulti<Perlin>,
+    map: HashMap<(i32, i32), (f64, f64)>,
+}
+
+impl Default for NoiseMaker {
+    fn default() -> Self {
+        let mut a = HybridMulti::<Perlin>::new(012345);
+        a.octaves = 6;
+        a.frequency = 1.1;
+        a.lacunarity = 2.8;
+        a.persistence = 0.4;
+
+        let mut b = HybridMulti::<Perlin>::new(98765);
+        b.octaves = 5;
+        b.frequency = 1.5;
+        b.lacunarity = 2.8;
+        b.persistence = 0.4;
+
+        Self {
+            a,
+            b,
+            map: HashMap::new(),
+        }
+    }
+}
+
+impl NoiseMaker {
+    pub fn get(&mut self, pos: IVec3) -> (f64, f64) {
+        let key = (pos.x, pos.z);
+        if let Some(value) = self.map.get(&key) {
+            *value
+        } else {
+            let value = (1.0, 3.14);
+            self.map.insert(key, value.clone());
+            value
+        }
+    }
+}
+
 #[derive(Resource, Clone, Default)]
 struct WillaDadWorld;
 
@@ -92,32 +134,19 @@ impl VoxelWorldConfig for WillaDadWorld {
         Box::new(move |chunk_pos, lod, previous| {
             println!("{chunk_pos} {lod} {previous:?}");
 
+            let mut noise = NoiseMaker::default();
+
             Box::new(move |pos: IVec3, _previous| {
-                if pos.y < -1 {
+                if pos.y < -10 {
                     return WorldVoxel::Solid(GRASS);
                 }
                 if pos.y > 50 {
                     return WorldVoxel::Unset;
                 }
-
                 let [x, y, z] = pos.as_dvec3().to_array();
-
-                // Sample is in range [-1.0, 1.0]
-
-                let mut n1 = HybridMulti::<Perlin>::new(012345);
-                n1.octaves = 6;
-                n1.frequency = 1.1;
-                n1.lacunarity = 2.8;
-                n1.persistence = 0.4;
-
-                let sample = n1.get([x / 1000.0, z / 1000.0]) * 50.0;
+                let sample = noise.a.get([x / 1000.0, z / 1000.0]) * 50.0;
                 if y < sample {
-                    let mut n2 = HybridMulti::<Perlin>::new(98765);
-                    n2.octaves = 5;
-                    n2.frequency = 1.5;
-                    n2.lacunarity = 2.8;
-                    n2.persistence = 0.4;
-                    let s2 = sample + n2.get([x / 1000.0, z / 1000.0]) * 10.0;
+                    let s2 = sample + noise.b.get([x / 1000.0, z / 1000.0]) * 10.0;
                     if s2 < 15.0 {
                         WorldVoxel::Solid(GRASS)
                     } else if s2 < 25.0 {
@@ -141,6 +170,43 @@ impl VoxelWorldConfig for WillaDadWorld {
     fn voxel_texture(&self) -> Option<(String, u32)> {
         Some(("mountain_house_texture.png".into(), TILE_COUNT))
     }
+}
+
+fn get_voxel_fn() -> Box<dyn FnMut(IVec3, Option<WorldVoxel>) -> WorldVoxel + Send + Sync> {
+    // Set up some noise to use as the terrain height map
+    let noise = NoiseMaker::default();
+
+    // We use this to cache the noise value for each y column so we only need
+    // to calculate it once per x/z coordinate
+    let mut cache = HashMap::<(i32, i32), f64>::new();
+
+    // Then we return this boxed closure that captures the noise and the cache
+    // This will get sent off to a separate thread for meshing by bevy_voxel_world
+    Box::new(move |pos: IVec3, _previous| {
+        // Sea level
+        if pos.y < 1 {
+            return WorldVoxel::Solid(3);
+        }
+
+        let [x, y, z] = pos.as_dvec3().to_array();
+
+        // If y is less than the noise sample, we will set the voxel to solid
+        let is_ground = y < match cache.get(&(pos.x, pos.z)) {
+            Some(sample) => *sample,
+            None => {
+                let sample = noise.a.get([x / 1000.0, z / 1000.0]) * 50.0;
+                cache.insert((pos.x, pos.z), sample);
+                sample
+            }
+        };
+
+        if is_ground {
+            // Solid voxel of material type 0
+            WorldVoxel::Solid(0)
+        } else {
+            WorldVoxel::Air
+        }
+    })
 }
 
 fn main() {
