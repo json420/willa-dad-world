@@ -1985,8 +1985,7 @@ dependencies = [
 [[package]]
 name = "bevy_voxel_world"
 version = "0.19.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "789b12e0b1f19fd378199670fe38dc4f110158b6a9c1a5dc6d016c2275e45ca0"
+source = "git+https://github.com/splashdust/bevy_voxel_world.git?branch=main#584ac4ef3e3585d5915a0267496ee7770fbc26b2"
 dependencies = [
  "ahash",
  "bevy",
@@ -1994,7 +1993,7 @@ dependencies = [
  "futures-lite",
  "getrandom 0.3.4",
  "getrandom 0.4.3",
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "ndshape",
  "rand 0.10.4",
  "weak-table",
@@ -2948,7 +2947,7 @@ version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6688bc1294fe7117d788937b6c53480169b29c566954af490830d4c09da9516a"
 dependencies = [
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "linebender_resource_handle",
  "memmap2",
  "parlance",
@@ -3157,6 +3156,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.34.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "627003914c6057c9c8f0832ee4f870b5a4f599d0cfa83f4072675114860cd0ff"
+dependencies = [
+ "bytemuck",
+]
+
+[[package]]
 name = "glam_matrix_extras"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3323,9 +3331,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.17.1"
+version = "0.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
+checksum = "735eaa21a6a5ffb2e84362faaeb90c05ba8e19797ca30428478cb6ea3a4921bc"
 dependencies = [
  "allocator-api2",
  "equivalent",
@@ -3528,7 +3536,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855"
 dependencies = [
  "equivalent",
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "serde",
  "serde_core",
 ]
@@ -4034,7 +4042,7 @@ dependencies = [
  "cfg_aliases",
  "codespan-reporting",
  "half",
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "indexmap",
  "libm",
  "log",
@@ -4053,7 +4061,7 @@ version = "30.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14474170feb673cfb18b3565111a9869797cc1d290fb9ec969c53f5e1e231c6d"
 dependencies = [
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "indexmap",
  "rustc-hash 1.1.0",
  "serde",
@@ -4641,7 +4649,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e079e5dff9fc17017bfb526d5b71fe077e603de662e4b22f6deb4b6b36e5895"
 dependencies = [
  "bytemuck",
- "glam 0.33.12",
+ "glam 0.34.3",
  "half",
  "log",
  "rdst",
@@ -4766,7 +4774,7 @@ checksum = "22d2ff88bd3f7d68d1d9b09c7e6209f9a8e8c05088295140a2bcf2e9b17038c5"
 dependencies = [
  "fontique",
  "harfrust",
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "icu_normalizer",
  "icu_properties",
  "icu_segmenter",
@@ -4799,7 +4807,7 @@ dependencies = [
  "ena",
  "foldhash 0.2.0",
  "glamx",
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "log",
  "num-derive 0.5.1",
  "num-traits",
@@ -4828,7 +4836,7 @@ dependencies = [
  "ena",
  "foldhash 0.2.0",
  "glamx",
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "log",
  "num-derive 0.5.1",
  "num-traits",
@@ -6437,7 +6445,7 @@ dependencies = [
  "cfg-if",
  "cfg_aliases",
  "document-features",
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "js-sys",
  "log",
  "portable-atomic",
@@ -6465,7 +6473,7 @@ dependencies = [
  "bytemuck",
  "cfg_aliases",
  "document-features",
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "indexmap",
  "log",
  "naga",
@@ -6531,7 +6539,7 @@ dependencies = [
  "glow",
  "glutin_wgl_sys",
  "gpu-allocator",
- "hashbrown 0.17.1",
+ "hashbrown 0.17.2",
  "js-sys",
  "khronos-egl",
  "libc",

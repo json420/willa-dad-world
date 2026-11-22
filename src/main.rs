@@ -132,7 +132,7 @@ impl VoxelWorldConfig for WillaDadWorld {
     type ChunkUserBundle = ();
 
     fn spawning_distance(&self) -> u32 {
-        16
+        8
     }
 
     fn chunk_spawn_strategy(&self) -> ChunkSpawnStrategy {
@@ -144,11 +144,7 @@ impl VoxelWorldConfig for WillaDadWorld {
     }
 
     fn voxel_lookup_delegate(&self) -> VoxelLookupDelegate<Self::MaterialIndex> {
-        // This is the Chunk closure, called once per chunk
-
-        Box::new(move |chunk_pos, lod, previous| {
-            println!("{chunk_pos} {lod} {previous:?}");
-
+        Box::new(move |_chunk_pos, _lod, _previous| {
             let mut noise = NoiseMaker::default();
 
             Box::new(move |pos: IVec3, _previous| {
@@ -159,9 +155,9 @@ impl VoxelWorldConfig for WillaDadWorld {
                     return WorldVoxel::Unset;
                 }
                 let (a, b) = noise.get(&pos);
-                let [x, y, z] = pos.as_dvec3().to_array();
+                let y = pos.y as f64;
                 if y < a {
-                    let s2 = a + b;
+                    let s2 = y + b;
                     if s2 < 15.0 {
                         WorldVoxel::Solid(GRASS)
                     } else if s2 < 25.0 {

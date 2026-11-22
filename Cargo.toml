@@ -7,7 +7,7 @@ rust-version = "1.100.0"
 [dependencies]
 avian3d = "0.8.0"
 bevy = { version = "0.20.1", features = ["bevy_dev_tools", "debug", "render_dev_tools"] }
-bevy_voxel_world = { version = "0.19.3", features = ["light_propagation"] }
+bevy_voxel_world = { version = "0.19.3", features = ["dislodged_fragments", "light_propagation", "sub_grids"], git = "https://github.com/splashdust/bevy_voxel_world.git", branch = "main" }
 noise = "0.9.0"
 rand = "0.10.4"
 
