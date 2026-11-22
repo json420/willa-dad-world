@@ -1,6 +1,9 @@
 use avian3d::prelude::*;
 use bevy::{
-    dev_tools::fps_overlay::FpsOverlayPlugin, input::mouse::AccumulatedMouseMotion, prelude::*,
+    dev_tools::fps_overlay::FpsOverlayPlugin,
+    input::mouse::AccumulatedMouseMotion,
+    prelude::*,
+    window::{CursorGrabMode, CursorOptions, PrimaryWindow, WindowMode},
 };
 use bevy_voxel_world::prelude::*;
 use noise::{HybridMulti, NoiseFn, Perlin};
@@ -112,6 +115,12 @@ impl NoiseMaker {
     }
 }
 
+#[derive(Event)]
+struct ToggleFullscreen;
+
+#[derive(Event)]
+struct UnFullscreen;
+
 #[derive(Resource, Clone, Default)]
 struct WillaDadWorld;
 
@@ -182,7 +191,9 @@ fn main() {
         .add_plugins(FpsOverlayPlugin::default())
         .add_plugins(VoxelWorldPlugin::with_config(WillaDadWorld::default()))
         .add_systems(Startup, setup)
-        .add_systems(Update, mouse_move)
+        .add_systems(Update, (button_input, mouse_move))
+        .add_observer(toggle_fullscreen)
+        .add_observer(un_fullscreen)
         .run();
 }
 
@@ -216,6 +227,30 @@ fn setup(mut commands: Commands, mut voxel_world: VoxelWorld<WillaDadWorld>) {
     }
 }
 
+fn button_input(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    mut cursor_options: Single<&mut CursorOptions>,
+    mut commands: Commands,
+) {
+    if keyboard.just_pressed(KeyCode::Escape) {
+        cursor_options.visible = true;
+        cursor_options.grab_mode = CursorGrabMode::None;
+        commands.trigger(UnFullscreen);
+    }
+    if keyboard.just_pressed(KeyCode::F11) {
+        commands.trigger(ToggleFullscreen)
+    }
+    if mouse.any_just_pressed([MouseButton::Left, MouseButton::Right]) {
+        if cursor_options.visible || cursor_options.grab_mode != CursorGrabMode::Locked {
+            cursor_options.visible = false;
+            cursor_options.grab_mode = CursorGrabMode::Locked;
+        } else {
+            println!("would do stuff, yo");
+        }
+    }
+}
+
 fn mouse_move(
     motion: Res<AccumulatedMouseMotion>,
     mut transform: Single<&mut Transform, With<Camera3d>>,
@@ -226,4 +261,27 @@ fn mouse_move(
     let pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
     let yaw = yaw + delta_yaw;
     transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+}
+
+fn toggle_fullscreen(
+    _on: On<ToggleFullscreen>,
+    mut window: Single<&mut Window, With<PrimaryWindow>>,
+    mut cursor_options: Single<&mut CursorOptions>,
+) {
+    window.mode = match window.mode {
+        WindowMode::Windowed => {
+            cursor_options.visible = false;
+            cursor_options.grab_mode = CursorGrabMode::Locked;
+            WindowMode::BorderlessFullscreen(MonitorSelection::Primary)
+        }
+        _ => {
+            cursor_options.visible = true;
+            cursor_options.grab_mode = CursorGrabMode::None;
+            WindowMode::Windowed
+        }
+    };
+}
+
+fn un_fullscreen(_on: On<UnFullscreen>, mut window: Single<&mut Window, With<PrimaryWindow>>) {
+    window.mode = WindowMode::Windowed;
 }
