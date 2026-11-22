@@ -97,18 +97,21 @@ impl Default for NoiseMaker {
         Self {
             a,
             b,
-            map: HashMap::new(),
+            map: HashMap::with_capacity(1024),
         }
     }
 }
 
 impl NoiseMaker {
-    pub fn get(&mut self, pos: IVec3) -> (f64, f64) {
+    pub fn get(&mut self, pos: &IVec3) -> (f64, f64) {
         let key = (pos.x, pos.z);
         if let Some(value) = self.map.get(&key) {
             *value
         } else {
-            let value = (1.0, 3.14);
+            let [x, _y, z] = pos.as_dvec3().to_array();
+            let a = self.a.get([x / 1000.0, z / 1000.0]) * 50.0;
+            let b = self.b.get([x / 1000.0, z / 1000.0]) * 10.0;
+            let value = (a, b);
             self.map.insert(key, value.clone());
             value
         }
@@ -146,7 +149,7 @@ impl VoxelWorldConfig for WillaDadWorld {
         Box::new(move |chunk_pos, lod, previous| {
             println!("{chunk_pos} {lod} {previous:?}");
 
-            let noise = NoiseMaker::default();
+            let mut noise = NoiseMaker::default();
 
             Box::new(move |pos: IVec3, _previous| {
                 if pos.y < -10 {
@@ -155,10 +158,10 @@ impl VoxelWorldConfig for WillaDadWorld {
                 if pos.y > 50 {
                     return WorldVoxel::Unset;
                 }
+                let (a, b) = noise.get(&pos);
                 let [x, y, z] = pos.as_dvec3().to_array();
-                let sample = noise.a.get([x / 1000.0, z / 1000.0]) * 50.0;
-                if y < sample {
-                    let s2 = sample + noise.b.get([x / 1000.0, z / 1000.0]) * 10.0;
+                if y < a {
+                    let s2 = a + b;
                     if s2 < 15.0 {
                         WorldVoxel::Solid(GRASS)
                     } else if s2 < 25.0 {
