@@ -74,6 +74,10 @@ impl VoxelWorldConfig for WillaDadWorld {
     type MaterialIndex = u8;
     type ChunkUserBundle = ();
 
+    fn spawning_distance(&self) -> u32 {
+        100
+    }
+
     fn chunk_spawn_strategy(&self) -> ChunkSpawnStrategy {
         ChunkSpawnStrategy::Close
     }
@@ -89,27 +93,36 @@ impl VoxelWorldConfig for WillaDadWorld {
             println!("{chunk_pos} {lod} {previous:?}");
 
             Box::new(move |pos: IVec3, _previous| {
-                if pos.y < 1 {
+                if pos.y < -1 {
                     return WorldVoxel::Solid(GRASS);
                 }
                 if pos.y > 50 {
                     return WorldVoxel::Unset;
                 }
-                let mut noise = HybridMulti::<Perlin>::new(12345);
-                noise.octaves = 6;
-                noise.frequency = 1.2;
-                noise.lacunarity = 2.8;
-                noise.persistence = 0.4;
+
                 let [x, y, z] = pos.as_dvec3().to_array();
 
                 // Sample is in range [-1.0, 1.0]
-                let sample = noise.get([x / 1000.0, z / 1000.0]) * 50.0;
+
+                let mut n1 = HybridMulti::<Perlin>::new(012345);
+                n1.octaves = 6;
+                n1.frequency = 1.1;
+                n1.lacunarity = 2.8;
+                n1.persistence = 0.4;
+
+                let sample = n1.get([x / 1000.0, z / 1000.0]) * 50.0;
                 if y < sample {
-                    if sample < 15.0 {
+                    let mut n2 = HybridMulti::<Perlin>::new(98765);
+                    n2.octaves = 5;
+                    n2.frequency = 1.5;
+                    n2.lacunarity = 2.8;
+                    n2.persistence = 0.4;
+                    let s2 = sample + n2.get([x / 1000.0, z / 1000.0]) * 10.0;
+                    if s2 < 15.0 {
                         WorldVoxel::Solid(GRASS)
-                    } else if sample < 25.0 {
+                    } else if s2 < 25.0 {
                         WorldVoxel::Solid(DIRT)
-                    } else if sample < 30.0 {
+                    } else if s2 < 30.0 {
                         WorldVoxel::Solid(STONE)
                     } else {
                         WorldVoxel::Solid(SNOWY_STONE)
@@ -134,7 +147,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(FpsOverlayPlugin::default())
-        .add_plugins(VoxelWorldPlugin::with_config(WillaDadWorld))
+        .add_plugins(VoxelWorldPlugin::with_config(WillaDadWorld::default()))
         .add_systems(Startup, setup)
         .add_systems(Update, mouse_move)
         .run();
