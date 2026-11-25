@@ -201,7 +201,7 @@ fn setup(mut commands: Commands, mut voxel_world: VoxelWorld<WillaDadWorld>) {
     commands.spawn((
         Camera3d::default(),
         VoxelWorldCamera::<WillaDadWorld>::default(),
-        RigidBody::Static,
+        RigidBody::Dynamic,
         Collider::capsule(PLAYER_RADIUS, PLAYER_HALF_HEIGHT),
         Transform::from_xyz(-40.0, 10.0, -40.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
